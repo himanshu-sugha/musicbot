@@ -1,0 +1,44 @@
+# Node.js dependencies
+node_modules/
+
+# Environment variables (contains sensitive information)
+.env
+
+# Private Keys and sensitive files
+private_key.json  # If you store private keys separately
+
+# Build and Distribution files
+build/
+dist/
+
+# Logs
+*.log
+
+# IDE/Editor specific files
+.vscode/
+.idea/
+.sublime/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+
+# Frontend build files (React/Next.js)
+frontend/build/
+frontend/.next/
+frontend/node_modules/
+
+# Solidity build artifacts and migrations
+contracts/build/
+contracts/migrations/
+contracts/.solcover/
+
+# Tailwind CSS temp files
+frontend/.tailwind/
+
+# Other misc files
+*.swp

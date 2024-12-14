@@ -31,7 +31,7 @@ Thumbs.db
 frontend/build/
 frontend/.next/
 frontend/node_modules/
-
+bot/env
 # Solidity build artifacts and migrations
 contracts/build/
 contracts/migrations/

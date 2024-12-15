@@ -1,79 +1,89 @@
-const { web3, contract, privateKey } = require('./web3Config'); // Import necessary Web3 config
+const { web3, musicBattleContract, shareMusicContract, voteTrackContract, leaderboardsContract, privateKey } = require('./web3Config');
 
-// Function to send a signed transaction (e.g., for starting the battle or voting)
-async function sendTransaction(data) {
-  try {
-      const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+// Helper function to send a signed transaction
+async function sendTransaction(tx, contractAddress) {
+    try {
+        const account = web3.eth.accounts.privateKeyToAccount(privateKey);
 
-      // Estimate gas for the transaction
-      const gas = await data.tx.estimateGas({ from: account.address });
+        // Estimate gas for the transaction
+        const gas = await tx.estimateGas({ from: account.address });
 
-      // Create the transaction object
-      const txData = {
-          from: account.address,
-          to: contract.options.address,
-          gas,
-          data: data.tx.encodeABI(),
-          gasPrice: web3.utils.toWei('200', 'gwei'),  // Adjust gas price if needed
-      };
+        // Prepare transaction data
+        const txData = {
+            from: account.address,
+            to: contractAddress || musicBattleContract.options.address, // Default to the main contract address
+            gas,
+            data: tx.encodeABI(),
+            gasPrice: web3.utils.toWei('20', 'gwei'), // Adjust gas price if needed
+        };
 
-      // Sign the transaction with the private key
-      const signedTx = await web3.eth.accounts.signTransaction(txData, privateKey);
+        // Sign the transaction
+        const signedTx = await web3.eth.accounts.signTransaction(txData, privateKey);
 
-      // Send the signed transaction using Infura (or another provider)
-      const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-      console.log('Transaction receipt:', receipt);
-      return receipt;  // Return the transaction receipt
-  } catch (error) {
-      if (error.message.includes('revert')) {
-          // Extract revert reason from the error
-          const revertReason = error.message.split('revert ')[1] || 'Unknown revert reason';
-          console.error('Transaction reverted:', revertReason);
-      } else {
-          console.error('Error sending transaction:', error.message || error);
-      }
-      throw error;  // Rethrow to handle it elsewhere if needed
-  }
+        // Send the signed transaction
+        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        console.log('Transaction receipt:', receipt);
+        return receipt;
+    } catch (error) {
+        console.error('Error sending transaction:', error.message || error);
+        throw error;
+    }
 }
 
-
-// Function to start a battle
+// Function to start a music battle
 async function startBattle(track1, track2) {
     try {
-        const tx = contract.methods.createBattle(track1, track2);
-        
-        // Call sendTransaction to send the signed transaction
-        const result = await sendTransaction({ tx });
-
-        console.log('Battle created:', result);
-        return result;  // Return the result of the transaction
+        const tx = musicBattleContract.methods.startBattle(track1, track2);
+        const result = await sendTransaction(tx, musicBattleContract.options.address);
+        console.log('Music battle started:', result);
+        return result;
     } catch (error) {
-        console.error('Error creating battle:', error.message || error);
-        throw error;  // Rethrow to handle it elsewhere if needed
+        console.error('Error starting music battle:', error.message || error);
+        throw error;
     }
 }
 
-// Function to vote for a track
+// Function to vote for a track in a battle
 async function voteTrack(battleId, trackNumber) {
     try {
-        // Ensure battleId exists (optional: check contract state before voting)
-        const battle = await contract.methods.battles(battleId).call();
-        if (!battle || battle.id !== battleId) {
-            throw new Error('Battle does not exist or has been closed.');
-        }
-
-        // Create a transaction for voting for a track
-        const tx = contract.methods.vote(battleId, trackNumber);
-
-        // Send the transaction
-        const result = await sendTransaction({ tx });
-
-        console.log('Vote registered:', result);
-        return result;  // Return the result of the vote transaction
+        const tx = musicBattleContract.methods.voteTrack(battleId, trackNumber);
+        const result = await sendTransaction(tx, musicBattleContract.options.address);
+        console.log(`Vote for track ${trackNumber} in battle ${battleId} registered:`, result);
+        return result;
     } catch (error) {
         console.error('Error voting for track:', error.message || error);
-        throw error;  // Rethrow to handle it elsewhere if needed
+        throw error;
     }
 }
 
-module.exports = { startBattle, voteTrack, sendTransaction };
+// Function to share a music track with another user
+async function shareMusic(trackId, userAddress) {
+    try {
+        const tx = shareMusicContract.methods.shareMusic(trackId, userAddress);
+        const result = await sendTransaction(tx, shareMusicContract.options.address);
+        console.log(`Track ${trackId} shared with user ${userAddress}:`, result);
+        return result;
+    } catch (error) {
+        console.error('Error sharing music:', error.message || error);
+        throw error;
+    }
+}
+
+// Function to fetch the leaderboard
+async function getLeaderboards() {
+    try {
+        const leaderboard = await leaderboardsContract.methods.getLeaderboard().call();
+        console.log(leaderboard);
+        return leaderboard;
+    } catch (error) {
+        console.error("Error fetching leaderboards:", error);
+    }
+}
+
+module.exports = {
+    startBattle,
+    voteTrack,
+    shareMusic,
+    getLeaderboards,
+    sendTransaction,
+};
